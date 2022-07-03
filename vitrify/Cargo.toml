@@ -1,5 +1,5 @@
 [package]
-name = "phlogiston_lang_compiler"
+name = "vitrify"
 version = "0.1.0"
 edition = "2021"
 
