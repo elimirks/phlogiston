@@ -31,6 +31,7 @@ Practically, the memory map is as follows:
 - [POKEY ASCII](http://krap.pl/mirrorz/atari/homepage.ntlworld.com/kryten_droid/Atari/800XL/atari_hw/pokey.htm)
 - [POKEY PDF](http://visual6502.org/images/C012294_Pokey/pokey.pdf)
 - [POKEY Pinout](https://user.xmission.com/~trevin/atari/pokey_pinout.html)
+- [Another POKEY Pinout](https://console5.com/techwiki/index.php?title=POKEY&mobileaction=toggle_view_desktop)
 
 ## 6502 Assembly
 
