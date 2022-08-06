@@ -32,6 +32,7 @@ Practically, the memory map is as follows:
 - [POKEY PDF](http://visual6502.org/images/C012294_Pokey/pokey.pdf)
 - [POKEY Pinout](https://user.xmission.com/~trevin/atari/pokey_pinout.html)
 - [Another POKEY Pinout](https://console5.com/techwiki/index.php?title=POKEY&mobileaction=toggle_view_desktop)
+- [Atari 800XL Service Manual](https://archive.org/details/Atari800XLServiceManual/page/n37/mode/2up)
 
 ## 6502 Assembly
 
@@ -54,13 +55,24 @@ If you use a schmitt trigger inverter, you can also use that for a reset circuit
 ... orrrr use a 555 timer for the reset circuit. But then you need 1 extra IC
 The nice thing about using the 555 timer is that you can probably tune how long you want the reset button depressed
 
-## TODO: WIP Figure out logic remapping for POKEY
+## TODO: Figure out if you need a 1.79Mhz clock for the POKEY to work properly
 
-1. Reallocate EEPROM to only 16K. I think 32K EEPROM is excessive. I'd rather have 32K of RAM
-2. Decide on a address line to enable the POKEY chip select
+According to the POKEY AUDCTL docs, there is a formula to compute the timer
+output frequencies relative to the input phi2 clock frequency.
 
-Desired address layout:
-- 0000-7fff: RAM (32k)        : (!a15)(phi2)         | !CS 
-- 8000-800f: VIA chip (16)    : (a15)(!a14)(!a4)     | CS1, !CS2
-- 8010-801f: POKEY chip (16)  : (a15)(!a14)(a4)      | !CS0, CS1
-- c000-ffff: EEPROM (16k)     : (a15)(a14)           | !CS
+Use that formula to figure out what notes you can make using a 1Mhz clock, and document it!
+
+Fout = Fin / 2(AUDF + M), M=4 for AUDCTL bits 3 and 4 set to 0. So:
+Fout = 1Mhz / 2(AUDF + 4)
+=> A = (1/Fout - 4)/2
+
+## TODO: Rewire memory mapping to support 4 expansion cards
+Their connectors should have the following 22 pins:
+- 8 data pins
+- (8?) address pins
+- 1 IRQB pin
+- 1 5V VCC pin
+- 1 GND pin
+- 1 Chip select pin
+- 1 R/W pin
+- 1 PHI2 pin
