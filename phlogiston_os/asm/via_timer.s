@@ -1,3 +1,5 @@
+;; Program to demonstrate handling IRQ interrupts from the VIA chip
+
   .include "base.s"
   .org ORIGIN
 
@@ -40,7 +42,6 @@ init_timer:
   ;; Enable IRQ interrupts for timer 1
   lda #%11000000
   sta VIA_IER
-  cli ; Clear interrupt inhibit (enable CPU interrupts)
   rts
 
 

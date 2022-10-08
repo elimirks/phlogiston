@@ -12,6 +12,15 @@ main:
   jsr lcd_print_char
   lda VIA_PORTA
   and #$0f
+  rol
+  rol
+  rol
+  rol
+  sta VIA_PORTA
+  ror
+  ror
+  ror
+  ror
   pha
   jsr lcd_print_hex_nibble
   lda #")"
@@ -103,3 +112,6 @@ fib_rec:
   txs
 fib_rec_end:
   rts
+
+irq:
+  rti

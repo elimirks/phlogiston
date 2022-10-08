@@ -30,6 +30,7 @@ VIA_RW    = %00000100 ; Read/Write pin
 VIA_RS    = %00000010 ; Register Select pin
 
 ; http://krap.pl/mirrorz/atari/homepage.ntlworld.com/kryten_droid/Atari/800XL/atari_hw/pokey.htm
+; http://visual6502.org/images/C012294_Pokey/pokey.pdf
 ; POKEY READ addresses
 POKEY_POT0   = $8010
 POKEY_POT1   = $8011
@@ -55,6 +56,8 @@ POKEY_AUDCTL = $8018
 POKEY_STIMER = $8019
 POKEY_POTGO  = $801b
 POKEY_IRQEN  = $801e  ; IRQ Enable address
+POKEY_SEROUT = $801d
+POKEY_SERIN  = $801d
 POKEY_SKCTL  = $801f
 
 ORIGIN    = $c000     ; EEPROM origin
@@ -73,11 +76,14 @@ _base_reset:
 
   ; Initialize POKEY
   ; @see page 20 the datasheet for details
-  lda $0
+  lda #0
   sta POKEY_SKCTL
   ; Disable all POKEY interrupts initially
   lda #0
   sta POKEY_IRQEN
+  ; Set skctl to normal value to finalize initialization
+  lda #%00000011
+  sta POKEY_SKCTL
 
   ; Clear interrupt inhibit to enable CPU interrupts
   cli

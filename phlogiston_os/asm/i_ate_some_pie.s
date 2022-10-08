@@ -22,3 +22,6 @@ print_end:
 
   ;; i8\sum\pi :)
 message: .data "i8", %11110110, %11110111, " ", %11000010, 0
+
+irq:
+  rti
