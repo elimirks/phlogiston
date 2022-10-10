@@ -81,6 +81,7 @@ _base_reset:
   ; Disable all POKEY interrupts initially
   lda #0
   sta POKEY_IRQEN
+
   ; Set skctl to normal value to finalize initialization
   lda #%00000011
   sta POKEY_SKCTL
@@ -238,6 +239,13 @@ _lcd_print_hex_over_10:
   clc
   adc #("A" - 10)
   jsr lcd_print_char
+  rts
+
+
+  ;; Jumps back to the beginning of the display
+lcd_seek_begin:
+  lda #%00000010
+  jsr lcd_instruction
   rts
 
 

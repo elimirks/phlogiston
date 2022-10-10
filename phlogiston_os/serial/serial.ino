@@ -10,7 +10,11 @@
 #define DATA_OUT 7 // SOD
 #define DATA_IN  4 // SID
 
-#define BCLK_HPERIOD 1 // half period of biclock
+// Half period of biclock, in microseconds.
+// Any faster than 32 and we get unpredictable behavior
+// This is largely constrained by the speed of the IRQ handler in the
+// loader program.
+#define BCLK_HPERIOD 32
 
 // Ribbon cabble mapping:
 // 4 (yellow) -> SID  (from Arduino)
@@ -24,21 +28,22 @@ void setup() {
     pinMode(CLK_OUT, INPUT);
     pinMode(DATA_OUT, INPUT);
     digitalWrite(DATA_IN, HIGH);
+    Serial.setTimeout(WINT_MAX);
     Serial.begin(57600);
 }
 
 void pulseClockRecv() {
     digitalWrite(CLK_IN, LOW);
-    delay(BCLK_HPERIOD);
+    delayMicroseconds(BCLK_HPERIOD);
     digitalWrite(CLK_IN, HIGH);
-    delay(BCLK_HPERIOD);
+    delayMicroseconds(BCLK_HPERIOD);
 }
 
 void pulseClockSend() {
     digitalWrite(CLK_IN, HIGH);
-    delay(BCLK_HPERIOD);
+    delayMicroseconds(BCLK_HPERIOD);
     digitalWrite(CLK_IN, LOW);
-    delay(BCLK_HPERIOD);
+    delayMicroseconds(BCLK_HPERIOD);
 }
 
 int recieveData() {
@@ -63,7 +68,7 @@ void sendData(int data) {
     pulseClockSend();
 }
 
-void loop() {
+void pingPong() {
     char output[15];
 
     pulseClockRecv();
@@ -76,4 +81,31 @@ void loop() {
         Serial.println(output);
         sendData(dat + 1);
     }
+}
+
+int waitForData() {
+    while (true) {
+        pulseClockRecv();
+        if (digitalRead(DATA_OUT) == LOW) {
+            return recieveData();
+        }
+    }
+}
+
+// 6502 must send 0x42 as a poke byte to initialize transfer
+void sendMessage(char *message) {
+    while (waitForData() != 0x42);
+    for (char *it = message; *it != '\0'; it++) {
+        Serial.print("Sending: ");
+        Serial.println(*it);
+        sendData(*it);
+    }
+    //while (waitForData() != 0x42);
+    Serial.println("End message.");
+    sendData(0);
+}
+
+void loop() {
+    sendMessage("Hello, world...");
+    //pingPong();
 }

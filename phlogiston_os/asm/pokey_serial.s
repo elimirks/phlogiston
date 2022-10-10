@@ -48,7 +48,9 @@ begin:
   rts
 
 
+  ;http://6502.org/tutorials/interrupts.html
 irq:
+  pha
   ; TODO: Check IRQST to make sure it's actually the right interrupt
   lda POKEY_SERIN
   sta num
@@ -60,4 +62,6 @@ irq:
 
   lda #1
   sta should_update
+
+  pla
   rti
