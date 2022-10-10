@@ -11,10 +11,11 @@
 #define DATA_IN  4 // SID
 
 // Half period of biclock, in microseconds.
-// Any faster than 32 and we get unpredictable behavior
+// Any faster than 35 and we get unpredictable behavior
 // This is largely constrained by the speed of the IRQ handler in the
 // loader program.
-#define BCLK_HPERIOD 32
+#define BCLK_HPERIOD 35
+//#define BCLK_HPERIOD 1000
 
 // Ribbon cabble mapping:
 // 4 (yellow) -> SID  (from Arduino)
@@ -96,16 +97,29 @@ int waitForData() {
 void sendMessage(char *message) {
     while (waitForData() != 0x42);
     for (char *it = message; *it != '\0'; it++) {
-        Serial.print("Sending: ");
-        Serial.println(*it);
+        // Serial.print("Sending: ");
+        // Serial.println(*it);
         sendData(*it);
     }
-    //while (waitForData() != 0x42);
-    Serial.println("End message.");
+    // Serial.println("End message.");
+    sendData(0);
+}
+
+// Sends garbage data, up to n bytes
+void sendBytes(int n) {
+    if (n > 0x3ffe) {
+        Serial.println("Max sendBytes is 0x3ffe");
+        return;
+    }
+    while (waitForData() != 0x42);
+    for (int i = 0; i < n; i++) {
+        sendData('0' + (i % 10));
+    }
     sendData(0);
 }
 
 void loop() {
-    sendMessage("Hello, world...");
+    sendBytes(0x3ffe);
+    //sendMessage("The quick brown fox jumps over the lazy dog.");
     //pingPong();
 }
