@@ -23,14 +23,38 @@
 // 3 (red)    -> ACLK (into Arduino)
 // 7 (brown)  -> SOD  (into Arduino)
 
+// Smol blinking program to test out uploading programs to RAM
+// Conveniently, it doesn't have any null bytes!
+const char blink[19] = {
+    0xa9,
+    0xf0,
+    0x8d,
+    0x03,
+    0x80,
+    0xa9,
+    0x20, // initial output register byte
+    0x8d,
+    0x01,
+    0x80,
+    //0x6a, // ror
+    0xea, // nop
+    0x8d,
+    0x01,
+    0x80,
+    0x4c,
+    0x0a,
+    0x40,
+    0x00, // Null terminate, a bit odd I know
+};
+
 void setup() {
     pinMode(CLK_IN, OUTPUT);
     pinMode(DATA_IN, OUTPUT);
     pinMode(CLK_OUT, INPUT);
     pinMode(DATA_OUT, INPUT);
     digitalWrite(DATA_IN, HIGH);
-    Serial.setTimeout(WINT_MAX);
-    Serial.begin(57600);
+    Serial.setTimeout(100);
+    Serial.begin(256000);
 }
 
 void pulseClockRecv() {
@@ -118,8 +142,62 @@ void sendBytes(int n) {
     sendData(0);
 }
 
+void echo() {
+    if (Serial.available() > 0) {
+        byte incoming = Serial.read();
+        Serial.write(incoming);
+    }
+}
+
 void loop() {
-    sendBytes(0x3ffe);
+    //sendBytes(0x3ffe);
     //sendMessage("The quick brown fox jumps over the lazy dog.");
+    //sendMessage(blink);
     //pingPong();
+    //infiniteStream();
+    relay();
+    // Wait for poke byte from 6502
+}
+
+// To test that the bootloader buffering code works
+void infiniteStream() {
+    while (waitForData() != 0x42);
+    byte i = 0;
+    while (true) {
+        sendData(i);
+        i = (i + 1) & 0xf;
+    }
+}
+
+void relay() {
+    // Wait for poke byte from 6502
+    while (waitForData() != 0x42);
+    // Send poke byte to PC
+    Serial.write(0x42);
+    // Wait for PC to send some data
+    while (Serial.available() == 0);
+    // First off, find program size. So we know how many bytes to read
+    byte lsb = Serial.read();
+    while (Serial.available() == 0);
+    byte msb = Serial.read();
+    // Send the program size to the 6520 as a header
+    // sendData(progSize & 0xff);
+    // sendData((progSize & 0xff00) >> 8);
+    sendData(lsb);
+    sendData(msb);
+
+    int progSize = (msb << 8) + lsb;
+
+    #define BUF_LEN 255
+    byte buf[BUF_LEN];
+    for (int i = 0; i < progSize;) {
+        byte readNum = Serial.readBytes(buf, BUF_LEN);
+
+        for (int j = 0; j < readNum; j++) {
+            sendData(buf[j]);
+        }
+        // Send upload ack byte to PC
+        Serial.write(readNum);
+        i += readNum;
+    }
 }
