@@ -43,6 +43,7 @@ bootloader_main:
   sta $3fff
 
   jsr load_serial_data
+  jsr lcd_clear
   jmp $4000
 
 

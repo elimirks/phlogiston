@@ -1,7 +1,7 @@
-  .org $4000                    ; Necessary to fill up the entire 32K
+  .org $4000
   ; TODO: Require specifying main function & IRQ?
 
-reset:
+main:
   ;; Set the data direction of register B to all outputs
   ;; #$ff is the bitmask: each set bit indicates that pin should be an output
   lda #$f0
@@ -12,6 +12,6 @@ reset:
 
   lda #$c0
 loop:
-  ror                           ; Rotate register A right.
+  ;ror                           ; Rotate register A right.
   sta $8001                     ; Move register A to I/O VIA register A.
   jmp loop                      ; Ad infinitum!

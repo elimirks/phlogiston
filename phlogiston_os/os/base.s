@@ -102,9 +102,7 @@ _base_lcd_init:
   ; Set 4-bit 2-row mode
   lda #%00101000
   jsr lcd_instruction
-  ; Clear display
-  lda #%00000001
-  jsr lcd_instruction
+  jsr lcd_clear
   rts
 
 
@@ -160,6 +158,13 @@ lcd_instruction:
   sta VIA_PORTB
   and #(~VIA_E)
   sta VIA_PORTB
+  rts
+
+
+  ; Clear the display
+lcd_clear:
+  lda #%00000001
+  jsr lcd_instruction
   rts
 
 

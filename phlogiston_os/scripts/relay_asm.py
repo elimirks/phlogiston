@@ -22,7 +22,12 @@ if __name__ == "__main__":
 
     data = b''
     with open(bin_file, "rb") as f:
-        data = f.read()
+        # Anything after 0x3fff is from including the stdlib... which we ignore!
+        #data = f.read()[:0x3fff]
+        # TODO: !!!
+        # You can probably use the `seg4000) output from vasm to find the
+        # actual number of bytes we need to copy.
+        data = f.read()[:0x0fff]
 
     ser = serial.Serial("/dev/ttyACM0", 256000)
 
