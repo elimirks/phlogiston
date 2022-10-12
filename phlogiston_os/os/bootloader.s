@@ -1,3 +1,5 @@
+; TODO: Require specifying main function & IRQ addrs at beginning of file
+
 ; Program to load in and display an ASCII message
 ; The loading is null terminated
 
@@ -63,9 +65,29 @@ load_serial_data_spin:
   lda $01
   cmp #$3f
   bmi load_serial_data_spin
-  ; TODO: Compare the program size
-  jmp load_serial_data_spin
-
+  ; For debugging
+  lda $3fff
+  clc
+  adc #$40
+  jsr lcd_print_hex
+  lda $3ffe
+  jsr lcd_print_hex
+  ; Calculate where to expect the pointer to end
+  lda $3fff ; MSB of size
+  clc
+  adc #$40  ; To align with pointer offset
+  tax
+  ldy $3ffe ; LSB of size
+  dey       ; To align with pointer offset
+  ; Check if MSB of ptr is where it should be
+  cpx $01
+  bne load_serial_data_spin
+  ; Check if LSB of ptr is where it should be
+  cpy $00
+  bne load_serial_data_spin
+  ; If all the above checks failed, it means we're done!
+  lda #'!'
+  jsr lcd_print_char
   rts
 
 

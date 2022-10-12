@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import serial
 import sys
 
@@ -10,11 +11,17 @@ def divide_chunks(l, n):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: " + sys.argv[0] + " [program_name].bin")
+        print("Usage: " + sys.argv[0] + " [program_name].s")
+        exit(1)
+
+    asm_file = sys.argv[1]
+    bin_file = "/tmp/vasm.bin"
+
+    if os.system(f"vasm6502_oldstyle -Fbin -dotdir {asm_file} -o {bin_file}") != 0:
         exit(1)
 
     data = b''
-    with open(sys.argv[1], "rb") as f:
+    with open(bin_file, "rb") as f:
         data = f.read()
 
     ser = serial.Serial("/dev/ttyACM0", 256000)

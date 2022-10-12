@@ -1,5 +1,15 @@
 Base on [Ben Eater's 6502 computer kit](https://eater.net/6502).
 
+## Writing code for the phlogiston computer
+For writing programs that you can upload over serial, see `progs/blink.s`.
+It's shows a simple example of how to set up a program to run over serial.
+
+How does it work?
+1. The Phlogiston bootloader will send a "poke byte" to an Arduino.
+2. The Arduino will then send a poke byte to your PC
+3. You should be running the `relay_asm.py` script to upload your program
+4. The 6502 computer will save the program data at memory address `$4000` 
+5. Once the entire program is uploaded, it moves execution to the uploaded program
 ## Tutorials
 http://6502.org/tutorials/interrupts.html
 ## Memory map
