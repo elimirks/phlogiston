@@ -4,6 +4,7 @@
 ; The loading is null terminated
 
   .include "base.s"
+  .org $8000 ; Necessary to fill up the entire 32K
   .org ORIGIN
 
 ; Only enable serial input data ready interrupt
@@ -17,13 +18,19 @@ load_base = $4000
 load_ptr = $00
 
 
-main:
+bootloader_main:
+  ; Initialize the stack pointer
+  ; Remember, it grows down. So if you push a byte to the stack, SP := SP-1
+  ; SP is the index of the NEXT stack element to push, not the most recent
+  ldx #$ff
+  txs
+  jsr reset
+
   ; Set up interrupts for recieving data
   lda #INT_MASK
   sta POKEY_IRQEN
 
   ; TODO: No magic numbers!
-
 
   ; Start the pointer at 3ffd, to write the program size first
   lda #$fd
@@ -91,7 +98,7 @@ load_serial_data_spin:
   rts
 
 
-irq:
+bootloader_irq:
   pha
   txa
   pha
@@ -115,3 +122,8 @@ _irq_load_ptr_inc_end:
   tax
   pla
   rti
+
+
+  .org $fffc
+  .word bootloader_main
+  .word bootloader_irq

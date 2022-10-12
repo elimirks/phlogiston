@@ -1,19 +1,3 @@
-; This is the base include file for your 6502 programs.
-; It sets up all necessary functionality including the LCD.
-; You _must_ define a `main` label in your program, which returns with rts.
-; You must also define an `irq` label, which returns with rti.
-; In short, you can define the simplest program as follows, which will
-; initialize then return here to spin ad infinitum:
-; ```
-;    .include "base.s"
-;    .org ORIGIN
-;  main:
-;    rts
-;  irq:
-;    rti
-; ```
-; ... but that's no fun!
-
 ; VIA chip Enable, Read/Write, and Register Select pins
 ; https://eater.net/datasheets/w65c22.pdf
 VIA_PORTB = $8000     ; I/O data register B
@@ -63,17 +47,10 @@ POKEY_SKCTL  = $801f
 ORIGIN    = $c000     ; EEPROM origin
 STACK_ORG = $0100     ; Program stack origin
 
-  .org $8000 ; Necessary to fill up the entire 32K
   .org ORIGIN
 
 
-_base_reset:
-  ; Initialize the stack pointer
-  ; Remember, it grows down. So if you push a byte to the stack, SP := SP-1
-  ; SP is the index of the NEXT stack element to push, not the most recent
-  ldx #$ff
-  txs
-
+reset:
   ; Initialize POKEY
   ; @see page 20 the datasheet for details
   lda #0
@@ -85,9 +62,6 @@ _base_reset:
   ; Set skctl to normal value to finalize initialization
   lda #%00000011
   sta POKEY_SKCTL
-
-  ; Clear interrupt inhibit to enable CPU interrupts
-  cli
 
   ; Set up port A for outputs on the high bits, inputs on the low bits
   ; For now, the high bits are connected to 4 LEDs
@@ -103,11 +77,14 @@ _base_reset:
   lda #%00000110
   jsr lcd_instruction
 
-  jsr main
+  ; Clear interrupt inhibit to enable CPU interrupts
+  cli
+  rts
 
 
-_base_eofspin:
-  jmp _base_eofspin
+  ; function to effectively stop execution
+stop:
+  jmp stop
 
 
 _base_lcd_init:
@@ -217,7 +194,6 @@ lcd_print_char:
   ; The A register is the value to print in hex
   ; Always outputs 2 characters
 lcd_print_hex:
-  ; TODO: Translate into hex characters.. one nibble at a time!
   pha
   ror
   ror
@@ -225,7 +201,7 @@ lcd_print_hex:
   ror
   jsr lcd_print_hex_nibble
   pla
-  jmp lcd_print_hex_nibble ; No need to jsr here, we want to return after anyways
+  ; Fall through to print the next nibble
 lcd_print_hex_nibble:
   and #$0f
   cmp #$a
@@ -247,8 +223,3 @@ lcd_seek_begin:
   lda #%00000010
   jsr lcd_instruction
   rts
-
-
-  .org $fffc
-  .word _base_reset
-  .word irq
