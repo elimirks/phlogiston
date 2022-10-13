@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import os
+import re
 import serial
+import subprocess
 import sys
 
 # Yield successive n-sized chunks from l
@@ -9,6 +10,35 @@ def divide_chunks(l, n):
         yield l[i:i + n]
 
 
+# Returns number of bytes necessary to read from the out file
+def run_vasm(asm_file, out_path):
+    proc = subprocess.run([
+        "vasm6502_oldstyle",
+        "-Fbin",
+        "-dotdir",
+        asm_file,
+        "-o",
+        out_path,
+    ], capture_output=True)
+
+    if proc.returncode != 0:
+        print(proc.stderr.decode("utf-8"))
+        exit(proc.returncode)
+    stdout = proc.stdout.decode("utf-8")
+
+    for line in stdout.split('\n'):
+        byteregex = re.compile(r"^seg4000.*:\s+(\d+)\s+bytes")
+        match = byteregex.match(line)
+        if match is not None:
+            return int(match.group(1))
+    print("Failed finding seg4000 in vasm output")
+    exit(1)
+
+def load_bin_from_asm(asm_file, out_path):
+    prog_byte_num = run_vasm(asm_file, out_path)
+    with open(bin_file, "rb") as f:
+        return f.read()[:prog_byte_num]
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: " + sys.argv[0] + " [program_name].s")
@@ -16,18 +46,8 @@ if __name__ == "__main__":
 
     asm_file = sys.argv[1]
     bin_file = "/tmp/vasm.bin"
-
-    if os.system(f"vasm6502_oldstyle -Fbin -dotdir {asm_file} -o {bin_file}") != 0:
-        exit(1)
-
-    data = b''
-    with open(bin_file, "rb") as f:
-        # Anything after 0x3fff is from including the stdlib... which we ignore!
-        #data = f.read()[:0x3fff]
-        # TODO: !!!
-        # You can probably use the `seg4000) output from vasm to find the
-        # actual number of bytes we need to copy.
-        data = f.read()[:0x0fff]
+    print(f"Assembling {asm_file}")
+    data = load_bin_from_asm(asm_file, bin_file)
 
     ser = serial.Serial("/dev/ttyACM0", 256000)
 
