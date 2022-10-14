@@ -21,12 +21,23 @@ repl:
     ;;;;;;;;;;;;;;;;;;;;
     cmp #"+"
     bne inc_dat_end
-    lda #1
+    lda (stack_ptr,x)
     clc
-    adc (stack_ptr,x)
+    adc #1
     sta (stack_ptr,x)
     jmp end_switch
 inc_dat_end:
+    ;;;;;;;;;;;;;;;;;;;;
+    ;; Decrement Data ;;
+    ;;;;;;;;;;;;;;;;;;;;
+    cmp #"-"
+    bne dec_dat_end
+    lda (stack_ptr,x)
+    sec
+    sbc #1
+    sta (stack_ptr,x)
+    jmp end_switch
+dec_dat_end:
     ;;;;;;;;;;;
     ;; Print ;;
     ;;;;;;;;;;;
@@ -67,7 +78,7 @@ dec_ptr_end:
     ldx #0
     lda (stack_ptr,x)
     cmp #0
-    beq .1
+    bne .1
     jsr seek_to_end_paren
 .1: jmp end_switch
 seek_forward_end:
@@ -100,16 +111,26 @@ seek_to_end_paren:
     jsr inc_prog_ptr
     ldx #0
     lda (prog_ptr,x)
-    cmp #'['
+    cmp #"["
     bne .1
     jsr seek_to_end_paren
     jmp seek_to_end_paren
-.1: cmp #']'
+.1: cmp #"]"
     bne seek_to_end_paren
     rts
 
-  ; TODO: This needs some love too
+
 seek_to_begin_paren:
+    ; TODO: Check for boundary conditions
+    jsr dec_prog_ptr
+    ldx #0
+    lda (prog_ptr,x)
+    cmp #"]"
+    bne .1
+    jsr seek_to_begin_paren
+    jmp seek_to_begin_paren
+.1: cmp #"["
+    bne seek_to_begin_paren
     rts
 
 
@@ -157,12 +178,23 @@ dec_prog_ptr;
   ; BF programs must be null terminated and initiated
   ; Null initiation is so that we can easily figure out when we hit the
   ; beginning of a program via a seek with the `]` operator
+  ; Change this value to select which brainfuck program to run
 bfprog = bf_hello
+
+bf_test_stack_ptr_inc_dec: .data 0
+; Expect to print the bytes 0102030201
+.1: .data "+.>++.>+-+++.<.<.", 0
+
+bf_test_condition: .data 0
+; Expect to print the bytes 0300
+.1: .data "[+]+++. [-].", 0
 
   ; Program to print out "h"
 bf_h: .data 0
 .1: .data "[++]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 .2: .data "+++++++++++.", 0
 
-  ; FIXME: Broken!
-bf_hello: .data 0, "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.", 0
+
+bf_hello: .data 0
+.1: .data "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++"
+.2: .data "..+++.>>.<-.<.+++.------.--------.>>+.", 0
