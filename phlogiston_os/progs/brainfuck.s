@@ -7,9 +7,9 @@ prog_ptr  = $02
 main:
     ; Start the prog pointer after the initial null byte
     lda #<bfprog
-    sta $02
+    sta prog_ptr
     lda #>bfprog
-    sta $03
+    sta prog_ptr+1
     jsr inc_prog_ptr
     jsr init_stack
 repl:
