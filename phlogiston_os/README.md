@@ -37,7 +37,6 @@ Practically, the memory map is as follows:
 ```
 
 ## Data sheets
-
 - [65c02](https://eater.net/datasheets/w65c02s.pdf)
 - [65c22](https://eater.net/datasheets/w65c22.pdf)
 - [POKEY ASCII](http://krap.pl/mirrorz/atari/homepage.ntlworld.com/kryten_droid/Atari/800XL/atari_hw/pokey.htm)
@@ -45,9 +44,7 @@ Practically, the memory map is as follows:
 - [POKEY Pinout](https://user.xmission.com/~trevin/atari/pokey_pinout.html)
 - [Another POKEY Pinout](https://console5.com/techwiki/index.php?title=POKEY&mobileaction=toggle_view_desktop)
 - [Atari 800XL Service Manual](https://archive.org/details/Atari800XLServiceManual/page/n37/mode/2up)
-
 ## 6502 Assembly
-
 See `blink.s` for an minimal example program.
 
 Or if you want to write an actual program, see `base.s` and `i_ate_some_pie.s`
@@ -57,8 +54,6 @@ References:
 - http://www.6502.org/tutorials/6502opcodes.html
 - https://skilldrick.github.io/easy6502/
 - https://usermanual.wiki/Document/pokeyC012294.3349751284/view
-
-
 ## TODO Fix power on reset
 - https://trobertson.site/6502-power-on-reset/
 - http://wilsonminesco.com/6502primer/RSTreqs.html
@@ -67,17 +62,19 @@ If you use a schmitt trigger inverter, you can also use that for a reset circuit
 ... orrrr use a 555 timer for the reset circuit. But then you need 1 extra IC
 The nice thing about using the 555 timer is that you can probably tune how long you want the reset button depressed
 
-## TODO: Figure out if you need a 1.79Mhz clock for the POKEY to work properly
-
+## POKEY Timing
 According to the POKEY AUDCTL docs, there is a formula to compute the timer
 output frequencies relative to the input phi2 clock frequency.
 
 Use that formula to figure out what notes you can make using a 1Mhz clock, and document it!
 
 Fout = Fin / 2(AUDF + M), M=4 for AUDCTL bits 3 and 4 set to 0. So:
-Fout = 1Mhz / 2(AUDF + 4)
-=> A = (1/Fout - 4)/2
+Fout = Fin / 2(AUDF + 4)
 
+Fin is orignially 64kHz. But if you use a different clock, you'll have to adjust it via:
+Fin = (64/1790) * Fclock
+
+=> A = (Fin/Fout - 4)/2
 ## TODO: Rewire memory mapping to support 4 expansion cards
 Their connectors should have the following 22 pins:
 - 8 data pins
