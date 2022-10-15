@@ -1,21 +1,20 @@
-  .include "../os/base.s"
-  .org $4000
+    .include "../os/base.s"
+    .org RAM_PROG_ORG
+    .word main
+    .word stop
 
 main:
-  ldx #0
+    ldx #0
+    stx $00
 print:
-  txa
-  pha
-  lda message,x
-  beq print_end
-  jsr lcd_print_char
-  pla
-  tax
-  inx
-  jmp print
+    ldx $00
+    lda message,x
+    beq print_end
+    jsr lcd_print_char
+    inc $00
+    jmp print
 print_end:
-  pla
-  jsr stop
+    jsr stop
 
 
 message: .data "Hello, world!", 0

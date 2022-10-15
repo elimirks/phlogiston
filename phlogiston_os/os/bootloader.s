@@ -11,120 +11,138 @@
 INT_MASK = %00100000
 
 ; Base address to load to
-load_base = $4000
+load_base = RAM_PROG_ORG
+; Address of where we load the size to expect
+; This is actually where we start writing serial data
+; Since the Arduino begins with sending the size bytes
+load_size = load_base-2
+; Indicates to the IRQ handler if we should jump to the app IRQ handler
+mem_irq_flag = load_base-3
+
+ram_prog_main_ptr = load_base
+ram_prog_irq_ptr  = load_base+2
 
 ; Use zero page 00 & 01 to point to the last byte of data
 ; NOTE: Initially it's indexed before the first byte
 load_ptr = $00
+poke_byte = $42
 
 
 bootloader_main:
-  ; Initialize the stack pointer
-  ; Remember, it grows down. So if you push a byte to the stack, SP := SP-1
-  ; SP is the index of the NEXT stack element to push, not the most recent
-  ldx #$ff
-  txs
-  jsr reset
+    ; Initialize the stack pointer
+    ; Remember, it grows down. So if you push a byte to the stack, SP := SP-1
+    ; SP is the index of the NEXT stack element to push, not the most recent
+    ldx #$ff
+    txs
+    jsr reset
 
-  ; Set up interrupts for recieving data
-  lda #INT_MASK
-  sta POKEY_IRQEN
+    ; Set up interrupts for recieving data
+    lda #INT_MASK
+    sta POKEY_IRQEN
 
-  ; TODO: No magic numbers!
+    ; Start the pointer at 3ffd, to write the program size first
+    lda #<load_size-1
+    sta load_ptr
+    lda #>load_size
+    sta load_ptr+1
+    ; Zero out the size initially so we can tell when the upload has started
+    lda #0
+    sta load_size
+    sta load_size+1
+    sta mem_irq_flag
 
-  ; Start the pointer at 3ffd, to write the program size first
-  lda #$fd
-  sta $00
-  lda #$3f
-  sta $01
-  ; Zero out the size initially so we can tell when the upload has started
-  lda #0
-  sta $3ffe
-  sta $3fff
-
-  jsr load_serial_data
-  jsr lcd_clear
-  jmp $4000
+    jsr load_serial_data
+    jsr lcd_clear
+    lda #1
+    sta mem_irq_flag
+    jmp (ram_prog_main_ptr)
 
 
 ;; Expects to read a null terminated string over serial.
 ;; Loads a max of 255 characters into memory.
 load_serial_data:
-  ; Poke serial out to tell Arduino to begin transmission
-  lda #$42
-  sta POKEY_SEROUT
-  ; Spin until data is ready
+    ; Poke serial out to tell Arduino to begin transmission
+    lda #poke_byte
+    sta POKEY_SEROUT
+    ; Spin until data is ready
 load_serial_data_spin:
-  jsr lcd_seek_begin
-  ; Display current pointer and expected size
-  lda $01
-  jsr lcd_print_hex
-  lda $00
-  jsr lcd_print_hex
-  lda #'('
-  jsr lcd_print_char
-  lda $3fff
-  jsr lcd_print_hex
-  lda $3ffe
-  jsr lcd_print_hex
-  lda #')'
-  jsr lcd_print_char
-  ; Check if the load ptr is below $3fff
-  lda $01
-  cmp #$3f
-  bmi load_serial_data_spin
-  ; For debugging
-  lda $3fff
-  clc
-  adc #$40
-  jsr lcd_print_hex
-  lda $3ffe
-  jsr lcd_print_hex
-  ; Calculate where to expect the pointer to end
-  lda $3fff ; MSB of size
-  clc
-  adc #$40  ; To align with pointer offset
-  tax
-  ldy $3ffe ; LSB of size
-  dey       ; To align with pointer offset
-  ; Check if MSB of ptr is where it should be
-  cpx $01
-  bne load_serial_data_spin
-  ; Check if LSB of ptr is where it should be
-  cpy $00
-  bne load_serial_data_spin
-  ; If all the above checks failed, it means we're done!
-  lda #'!'
-  jsr lcd_print_char
-  rts
+    jsr lcd_seek_begin
+    ; Display current pointer and expected size
+    lda load_ptr+1
+    jsr lcd_print_hex
+    lda load_ptr
+    jsr lcd_print_hex
+    lda #'('
+    jsr lcd_print_char
+    lda load_size+1
+    jsr lcd_print_hex
+    lda load_size
+    jsr lcd_print_hex
+    lda #')'
+    jsr lcd_print_char
+    ; Check if the load ptr is below $3fff
+    lda load_ptr+1
+    cmp #$3f
+    bmi load_serial_data_spin
+    ; For debugging
+    lda load_size+1
+    clc
+    adc #$40
+    jsr lcd_print_hex
+    lda load_size
+    jsr lcd_print_hex
+    ; Calculate where to expect the pointer to end
+    lda load_size+1 ; MSB of size
+    clc
+    adc #$40  ; To align with pointer offset
+    tax
+    ldy load_size ; LSB of size
+    dey       ; To align with pointer offset
+    ; Check if MSB of ptr is where it should be
+    cpx load_ptr+1
+    bne load_serial_data_spin
+    ; Check if LSB of ptr is where it should be
+    cpy load_ptr
+    bne load_serial_data_spin
+    ; If all the above checks failed, it means we're done!
+    lda #'!'
+    jsr lcd_print_char
+    rts
 
 
 bootloader_irq:
-  pha
-  txa
-  pha
-  ; Increment load pointer
-  inc $00
-  bne _irq_load_ptr_inc_end
-  inc $01
-  ; TODO: Fail condition when we overflow the MSB!
-_irq_load_ptr_inc_end:
-  ; Push to the data array
-  lda POKEY_SERIN
-  ldx #0
-  sta ($00,x) ; It's a real shame there's no zero page indirect mode...
-  ; Reset the interrupt
-  lda #0
-  sta POKEY_IRQEN
-  lda #INT_MASK
-  sta POKEY_IRQEN
+    pha
+    ; Check if we should jump to the memory IRQ handler
+    ; NOTE: This can be done more efficiently...
+    ; ...but it's good enough for now!
+    lda #0
+    cmp mem_irq_flag
+    beq .1
+    pla
+    jmp (ram_prog_irq_ptr)
+.1: txa
+    pha
+    ; Increment load pointer
+    inc load_ptr
+    bne .2
+    inc load_ptr+1
+    ; TODO: Fail condition when we overflow the MSB!
+    ; Push to the data array
+.2: lda POKEY_SERIN
+    ldx #0
+    sta (load_ptr,x) ; It's a real shame there's no zero page indirect mode...
+    ; Reset the interrupt
+    lda #0
+    sta POKEY_IRQEN
+    lda #INT_MASK
+    sta POKEY_IRQEN
 
-  pla
-  tax
-  pla
-  rti
+    pla
+    tax
+    pla
+    rti
 
 
-  .org $fffc
-  .word bootloader_main
-  .word bootloader_irq
+    .org $fffc
+    .word bootloader_main
+    .word bootloader_irq

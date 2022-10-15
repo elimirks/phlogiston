@@ -1,5 +1,7 @@
     .include "../os/base.s"
-    .org $4000
+    .org RAM_PROG_ORG
+    .word main
+    .word stop
 
 stack_ptr = $00
 prog_ptr  = $02

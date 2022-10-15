@@ -44,8 +44,9 @@ POKEY_SEROUT = $801d
 POKEY_SERIN  = $801d
 POKEY_SKCTL  = $801f
 
-ORIGIN    = $c000     ; EEPROM origin
-STACK_ORG = $0100     ; Program stack origin
+RAM_PROG_ORG = $4000 ; When running RAM progs, this is the origin
+ORIGIN       = $c000 ; EEPROM origin
+STACK_ORG    = $0100 ; Program stack origin
 
   .org ORIGIN
 
