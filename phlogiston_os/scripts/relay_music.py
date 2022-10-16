@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import re
 import sys
 
@@ -10,7 +11,9 @@ def frequency_to_pokey_byte(f):
     clock_speed = 1.0
     # Frequency of the POKEY timers (voices)
     # Must be adjusted since we have a different clock than the Atari 800
-    fin = 63921.0 * (clock_speed / 1.78979)
+    fin = 63.9210 * 1000.0 * (clock_speed / 1.78979)
+    #fin = 15.6999 * 1000.0 * (clock_speed / 1.78979)
+    #fin = 15.6999 * 1000.0
     # From the calculation shown in the POKEY data sheet
     return round(fin/(2 * f) - 4)
 
@@ -69,14 +72,21 @@ def read_file(f):
     return lines
 
 
+def load_musicplayer():
+    path = os.path.dirname(__file__) + "/../progs/musicplayer.s"
+    with open(path) as f:
+        return f.read()
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: " + sys.argv[0] + " [program_name].s")
         exit(1)
 
+    print("Loading music file")
     lines = read_file(sys.argv[1])
 
-    bpm = int(lines[0]) # TODO: error handling
+    bpm = float(lines[0]) # TODO: error handling
     tracks = [
         [],
         [],
@@ -85,35 +95,49 @@ if __name__ == "__main__":
     ]
     current_track = 0
 
+    print("Compiling music data")
     for line in lines[1:]:
         if line[0] == 'T':
             # TODO: Error handling
             current_track = int(line[1]) - 1
             continue
-        [ctl, duration, note] = line.split(" ")
+        [ctl, duration, note, modifier] = line.split(" ")
 
         duration = int(duration)
-        if duration < 0 or duration > 8:
+        if duration < 0 or duration > 255:
             print(f"Invalid duration: {duration}")
+            exit(1)
 
         pokey_byte = note_to_pokey_byte[note]
         if pokey_byte == None:
             print(f"Invalid note: {note}")
             exit(1)
-        tracks[current_track].append((ctl, duration, pokey_byte))
+        tracks[current_track].append((ctl, duration, pokey_byte, modifier))
 
-    output = f"tick_count_per_beat = {round(6000/(8 * bpm))}\n"
+    music_data = f"tick_count_per_beat = {round(6000.0/(8.0 * bpm))}\n"
 
     for i in range(4):
         track_num = i + 1
-        output += f"track{track_num}: .data "
+        music_data += f"track{track_num}: .data "
 
-        for (ctl, duration, note_byte) in tracks[i]:
-            for i in range(duration):
-                output += f"${ctl},{note_byte}, "
-            for i in range(8 - duration):
-                output += f"0,0, "
+        for (ctl, duration, note_byte, modifier) in tracks[i]:
+            music_data += f"{duration},${ctl},{note_byte}, "
+            # Comma modifier pads with excess duration
+            if modifier == ",":
+                excess = 8 - duration
+                if excess > 0:
+                    music_data += f"{excess},0,0, "
+            # Dot modifier does nothing
+            elif modifier == ".":
+                pass
+            else:
+                print(f"Unknown modifier: {modifier}")
+        music_data += "0\n"
 
-        output += "$ff\n"
+    music_player = load_musicplayer()
 
-    print(output)
+    out_path = os.path.dirname(__file__) + "/pokey_music.s"
+    with open(out_path, "w") as f:
+        f.write(music_player)
+        f.write(music_data)
+    relay_asm_file(out_path)

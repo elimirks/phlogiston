@@ -1,16 +1,19 @@
 ; Example:
-; a1 7 e4
+; a1 7 e4 .
 ; Volume 1, pure tone
 ; a1
 ; Hold for 7 beats of the note
 ; 7
 ; Play the e4 note
 ; e4
+; Don't pad the note with empty space
+; .
+
+; You can use `,` at the end of a line to pad it with empty space until the
+; end of the note.
 
 ; TODO:
-; - Support multiple tracks
 ; - Support loops (that roll out in the ASM I guess)
-; - Support setting BPM
 
 ; Mary Had a Little Lamb
 
@@ -20,32 +23,102 @@
 ; Load to Track 1
 T1
 ; Bar 1
-a1 7 e4
-a1 7 d4
-a1 7 c4
-a1 7 d4
-a1 7 e4
-a1 7 e4
-a1 7 e4
+a2 8 e4 .
+a2 8 d4 .
+a2 8 c4 .
+a2 8 d4 .
+a2 7 e4 ,
+a2 7 e4 ,
+a2 8 e4 .
 ; Bar 2
-a1 7 d4
-a1 7 d4
-a1 7 d4
-a1 7 e4
-a1 7 e4
-a1 7 e4
+a2 7 d4 ,
+a2 7 d4 ,
+a2 8 d4 .
+a2 7 e4 ,
+a2 7 e4 ,
+a2 7 e4 ,
 ; Bar 3
-a1 7 e4
-a1 7 d4
-a1 7 c4
-a1 7 d4
-a1 7 e4
-a1 7 e4
-a1 7 e4
+a2 8 e4 .
+a2 8 d4 .
+a2 8 c4 .
+a2 8 d4 .
+a2 7 e4 ,
+a2 7 e4 ,
+a2 7 e4 ,
 ; Bar 4
-a1 7 e4
-a1 7 d4
-a1 7 d4
-a1 7 e4
-a1 7 d4
-a1 7 c4
+a2 8 e4 .
+a2 7 d4 ,
+a2 8 d4 .
+a2 8 e4 .
+a2 8 d4 .
+a2 8 c4 .
+
+; e4 -> g#4
+; d4 -> f#4
+; c4 -> e4
+T2
+; Bar 1
+a2 8 g#4 .
+a2 8 f#4 .
+a2 8 e4 .
+a2 8 f#4 .
+a2 7 g#4 ,
+a2 7 g#4 ,
+a2 8 g#4 .
+; Bar 2
+a2 7 f#4 ,
+a2 7 f#4 ,
+a2 8 f#4 .
+a2 7 g#4 ,
+a2 7 g#4 ,
+a2 7 g#4 ,
+; Bar 3
+a2 8 g#4 .
+a2 8 f#4 .
+a2 8 e4 .
+a2 8 f#4 .
+a2 7 g#4 ,
+a2 7 g#4 ,
+a2 7 g#4 ,
+; Bar 4
+a2 8 g#4 .
+a2 7 f#4 ,
+a2 8 f#4 .
+a2 8 g#4 .
+a2 8 f#4 .
+a2 8 e4 .
+
+; e4 -> b4
+; d4 -> a4
+; c4 -> g4
+T3
+; Bar 1
+a2 8 b4 .
+a2 8 a4 .
+a2 8 g4 .
+a2 8 a4 .
+a2 7 b4 ,
+a2 7 b4 ,
+a2 8 b4 .
+; Bar 2
+a2 7 a4 ,
+a2 7 a4 ,
+a2 8 a4 .
+a2 7 b4 ,
+a2 7 b4 ,
+a2 7 b4 ,
+; Bar 3
+a2 8 b4 .
+a2 8 a4 .
+a2 8 g4 .
+a2 8 a4 .
+a2 7 b4 ,
+a2 7 b4 ,
+a2 7 b4 ,
+; Bar 4
+a2 8 b4 .
+a2 7 a4 ,
+a2 8 a4 .
+a2 8 b4 .
+a2 8 a4 .
+a2 8 g4 .
