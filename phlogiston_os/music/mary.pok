@@ -1,0 +1,51 @@
+; Example:
+; a1 7 e4
+; Volume 1, pure tone
+; a1
+; Hold for 7 beats of the note
+; 7
+; Play the e4 note
+; e4
+
+; TODO:
+; - Support multiple tracks
+; - Support loops (that roll out in the ASM I guess)
+; - Support setting BPM
+
+; Mary Had a Little Lamb
+
+; Set BPM (must be only once at the top of the file)
+; Note: Beats will be approximate to within 10ms, but evenly spaced
+167
+; Load to Track 1
+T1
+; Bar 1
+a1 7 e4
+a1 7 d4
+a1 7 c4
+a1 7 d4
+a1 7 e4
+a1 7 e4
+a1 7 e4
+; Bar 2
+a1 7 d4
+a1 7 d4
+a1 7 d4
+a1 7 e4
+a1 7 e4
+a1 7 e4
+; Bar 3
+a1 7 e4
+a1 7 d4
+a1 7 c4
+a1 7 d4
+a1 7 e4
+a1 7 e4
+a1 7 e4
+; Bar 4
+a1 7 e4
+a1 7 d4
+a1 7 d4
+a1 7 e4
+a1 7 d4
+a1 7 c4

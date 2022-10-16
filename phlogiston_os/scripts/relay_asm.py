@@ -34,18 +34,17 @@ def run_vasm(asm_file, out_path):
     print("Failed finding seg4000 in vasm output")
     exit(1)
 
+
 def load_bin_from_asm(asm_file, out_path):
     prog_byte_num = run_vasm(asm_file, out_path)
-    with open(bin_file, "rb") as f:
+    with open(out_path, "rb") as f:
         return f.read()[:prog_byte_num]
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: " + sys.argv[0] + " [program_name].s")
-        exit(1)
 
-    asm_file = sys.argv[1]
+# Complie & relay the given ASM file over serial
+def relay_asm_file(asm_file):
     bin_file = "/tmp/vasm.bin"
+
     print(f"Assembling {asm_file}")
     data = load_bin_from_asm(asm_file, bin_file)
 
@@ -67,3 +66,10 @@ if __name__ == "__main__":
     print("Upload success")
 
     ser.close()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: " + sys.argv[0] + " [program_name].s")
+        exit(1)
+    relay_asm_file(sys.argv[1])
