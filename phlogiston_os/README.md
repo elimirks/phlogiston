@@ -54,14 +54,12 @@ References:
 - http://www.6502.org/tutorials/6502opcodes.html
 - https://skilldrick.github.io/easy6502/
 - https://usermanual.wiki/Document/pokeyC012294.3349751284/view
-## TODO Fix power on reset
-- https://trobertson.site/6502-power-on-reset/
-- http://wilsonminesco.com/6502primer/RSTreqs.html
+## Power on reset
+I'm using the 555 timer reset circuit shown here: http://wilsonminesco.com/6502primer/RSTreqs.html
 
-If you use a schmitt trigger inverter, you can also use that for a reset circuit!
-... orrrr use a 555 timer for the reset circuit. But then you need 1 extra IC
-The nice thing about using the 555 timer is that you can probably tune how long you want the reset button depressed
+It's the same circuit the Sym-1 used, so... should be good enough since people who knew what they were doing designed it... right?
 
+I noticed that with the 10uF capacitor it takes roughly half a second to actually reset. I think that's ok, since it really won't be used that often
 ## POKEY Timing
 According to the POKEY AUDCTL docs, there is a formula to compute the timer
 output frequencies relative to the input phi2 clock frequency.
